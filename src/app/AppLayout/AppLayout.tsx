@@ -27,7 +27,8 @@ import { IAppRoute, navGroups, routes } from '@app/routes';
 import { ThemeSetting, SettingTab } from '@app/Settings/types';
 import { DARK_THEME_CLASS, selectTab, tabAsParam } from '@app/Settings/utils';
 import { CryostatLink } from '@app/Shared/Components/CryostatLink';
-import { DynamicFeatureFlag, FeatureFlag } from '@app/Shared/Components/FeatureFlag';
+import { FeatureFlag } from '@app/Shared/Components/FeatureFlag';
+import { FeatureLevelBadge } from '@app/Shared/Components/FeatureLevelBadge';
 import { navMenuSetExpandedIntent } from '@app/Shared/Redux/Configurations/NavMenuConfigSlice';
 import { RootState } from '@app/Shared/Redux/ReduxStore';
 import { NotificationCategory, Notification } from '@app/Shared/Services/api.types';
@@ -47,7 +48,6 @@ import {
   Brand,
   Button,
   Icon,
-  Label,
   Masthead,
   MastheadLogo,
   MastheadContent,
@@ -88,7 +88,7 @@ import _ from 'lodash';
 import * as React from 'react';
 import { Trans } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { matchPath, NavLink, useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import { matchPath, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { map } from 'rxjs/operators';
 import { LogoutIcon } from './LogoutIcon';
 import { ThemeToggle } from './ThemeToggle';
@@ -128,7 +128,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [theme] = useTheme();
-  const [useCompactLabels, setUseCompactLabels] = React.useState(true);
 
   const cryostatLogo = React.useMemo(
     () => (theme === ThemeSetting.DARK ? cryostatLogoDark : cryostatLogoLight),
@@ -157,10 +156,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       }),
     );
   }, [serviceContext.target, setShowAuthModal, addSubscription]);
-
-  React.useEffect(() => {
-    addSubscription(serviceContext.settings.largeUi().subscribe((v) => setUseCompactLabels(!v)));
-  }, [addSubscription, serviceContext.settings, setUseCompactLabels]);
 
   React.useEffect(() => {
     addSubscription(notificationsContext.notifications().subscribe((n) => setNotifications([...n])));
@@ -384,28 +379,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     ];
   }, [t, handleOpenDocumentation, handleOpenGuidedTour, handleOpenDiscussion, handleOpenAboutModal]);
 
-  const levelBadge = React.useCallback(
-    (level: FeatureLevel) => {
-      return (
-        <Label
-          isCompact={useCompactLabels}
-          style={{ marginLeft: '2ch', paddingTop: '0.125ch', paddingBottom: '0.125ch' }}
-          color={level === FeatureLevel.BETA ? 'teal' : 'red'}
-        >
-          {t(FeatureLevel[level])}
-        </Label>
-      );
-    },
-    [t, useCompactLabels],
-  );
-
   const headerToolbar = React.useMemo(
     () => (
       <>
         <Toolbar isFullHeight isStatic>
           <ToolbarContent>
             <ToolbarGroup variant="label-group" align={{ default: 'alignStart' }}>
-              <DynamicFeatureFlag levels={[FeatureLevel.DEVELOPMENT, FeatureLevel.BETA]} component={levelBadge} />
+              <FeatureLevelBadge />
             </ToolbarGroup>
             <ToolbarGroup variant="action-group-plain" align={{ default: 'alignEnd' }}>
               <FeatureFlag strict level={FeatureLevel.DEVELOPMENT}>
@@ -499,7 +479,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       </>
     ),
     [
-      levelBadge,
       notificationsContext,
       unreadNotificationsCount,
       errorNotificationsCount,
@@ -552,7 +531,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   const isActiveRoute = React.useCallback(
     (route: IAppRoute): boolean => {
-      const match = matchPath(location.pathname, route.path);
+      const match = matchPath(route.path, location.pathname);
       if (match) {
         return true;
       } else if (route.children) {
@@ -601,12 +580,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <NavLink
             end
             to={route.path}
-            className={(active) => (active ? 'pf-m-current' : undefined)}
+            className={(active) => (active?.isActive ? 'pf-m-current' : undefined)}
             data-quickstart-id={`nav-${cleanDataId(route.label!)}-tab`}
             data-tour-id={`${cleanDataId(route.label!)}`}
           >
             {route.label}
-            {route.featureLevel !== undefined && levelBadge(route.featureLevel)}
+            {route.featureLevel !== undefined && <FeatureLevelBadge level={route.featureLevel} />}
           </NavLink>
         </NavItem>
       );
@@ -656,7 +635,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </NavList>
       </Nav>
     );
-  }, [mobileOnSelect, navExpandedStates, handleNavExpand, isActiveRoute, levelBadge, activeLevel, t]);
+  }, [mobileOnSelect, navExpandedStates, handleNavExpand, isActiveRoute, activeLevel, t]);
 
   const Sidebar = React.useMemo(
     () => (

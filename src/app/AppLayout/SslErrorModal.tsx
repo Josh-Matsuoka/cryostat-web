@@ -16,7 +16,7 @@
 import { portalRoot, toPath } from '@app/utils/utils';
 import { Button, Content, Modal, ModalBody, ModalHeader } from '@patternfly/react-core';
 import * as React from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate } from 'react-router-dom';
 
 export interface SslErrorModalProps {
   visible: boolean;
@@ -27,7 +27,7 @@ export const SslErrorModal: React.FC<SslErrorModalProps> = ({ visible, onDismiss
   const navigate = useNavigate();
 
   const handleClick = React.useCallback(() => {
-    navigate(toPath('/security'));
+    navigate(toPath('/certificates'));
     onDismiss();
   }, [navigate, onDismiss]);
 
@@ -41,7 +41,7 @@ export const SslErrorModal: React.FC<SslErrorModalProps> = ({ visible, onDismiss
         <Content component="p">
           To view the trusted application certificates, go to &nbsp;
           <Button variant="primary" onClick={handleClick}>
-            Security
+            Certificates
           </Button>
         </Content>
       </ModalBody>
