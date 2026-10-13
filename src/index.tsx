@@ -16,4 +16,21 @@
 import { App } from '@app/index';
 import ReactDOM from 'react-dom';
 
-ReactDOM.render(<App />, document.getElementById('root') as HTMLElement);
+async function prepare() {
+  if (process.env.PREVIEW === 'true') {
+    const { startWorker } = await import('./msw/browser');
+    await startWorker();
+  }
+}
+
+prepare()
+  .then(() => {
+    ReactDOM.render(<App />, document.getElementById('root') as HTMLElement);
+  })
+  .catch((err) => {
+    console.error('Failed to start preview mock worker:', err);
+    ReactDOM.render(
+      <div role="alert">Failed to start the application: {String(err)}</div>,
+      document.getElementById('root') as HTMLElement,
+    );
+  });
